@@ -114,9 +114,69 @@ function groupStage(groups) {
     return standings;
 }
 
+
+// sortiranje prvo po poenima zatim po razlici u kosevima.
+function sortTeams(teams) {
+    return teams.sort((a, b) => {
+        if (b.points !== a.points) {
+            return b.points - a.points;
+        } else if (b.differences !== a.differences) {
+            return b.differences - a.differences;
+        } else {
+            return b.scored - a.scored;
+        }
+    });
+}
+
+// uzimanje timova koji su prvi drugi i treci u svoje grupe.
+function rankTeams(standings) {
+    const rankedTeams = {
+        firstPlace: [],
+        secondPlace: [],
+        thirdPlace: []
+    };
+
+    for (const group in standings) {
+        const sortedGroup = sortTeams(standings[group]);
+        rankedTeams.firstPlace.push(sortedGroup[0]);
+        rankedTeams.secondPlace.push(sortedGroup[1]);
+        rankedTeams.thirdPlace.push(sortedGroup[2]);
+    }
+
+    return rankedTeams;
+}
+
+// sortiranje unutar 1,2,3 grupa i dodavanje sve u jednu + dodavanje ranka.
+function finalRanking(rankedTeams) {
+    const allRankings = [];
+
+    const firstRanked = sortTeams(rankedTeams.firstPlace);
+    const secondRanked = sortTeams(rankedTeams.secondPlace);
+    const thirdRanked = sortTeams(rankedTeams.thirdPlace);
+
+    allRankings.push(...firstRanked, ...secondRanked, ...thirdRanked);
+
+    allRankings.forEach((team, index) => {
+        team.rank = index + 1;
+    });
+
+    return allRankings;
+}
+
+// Eliminaciona faza
+function eliminationPhase(finalRankings) {
+    const advancingTeams = finalRankings.slice(0, 8);
+    const eliminatedTeam = finalRankings[8];
+
+    return { advancingTeams, eliminatedTeam };
+}
+
 function main() {
     const groupStandings = groupStage(groups);
-
+    const rankedTeams = rankTeams(groupStandings);
+    const finalRankings = finalRanking(rankedTeams);
+    const { advancingTeams, eliminatedTeam } = eliminationPhase(finalRankings);
+    console.log(advancingTeams, eliminatedTeam)
 }
 
 main();
