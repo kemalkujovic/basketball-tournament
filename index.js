@@ -80,9 +80,19 @@ function groupStage(groups) {
             group,
         }));
 
+        console.log(`\nGrupna Faza: - 1 - 2 - 3 kolo`);
+
+        console.log(`\nGrupa: ${group}:`)
         for (let i = 0; i < groups[group].length; i++) {
             for (let j = i + 1; j < groups[group].length; j++) {
                 const result = simulateMatch(groups[group][i], groups[group][j]);
+
+                if (result.draw) {
+                    console.log(`${result.teamA.Team} - ${result.teamB.Team} (${result.score})`)
+                } else {
+                    console.log(`${result.winner.Team} - ${result.loser.Team} (${result.score})`)
+                }
+
                 if (result?.draw) {
                     const teamA = standings[group].find(
                         (team) => team.ISOCode === result.teamA.ISOCode
@@ -125,6 +135,7 @@ function groupStage(groups) {
             }
         }
     }
+
     return standings;
 }
 
@@ -184,7 +195,6 @@ function eliminationPhase(finalRankings, groupStandings) {
         F: finalRankings.slice(4, 6),
         G: finalRankings.slice(6, 8),
     };
-
     const usedTeams = [];
 
     const findOpponent = (teamA, pot) => {
@@ -248,6 +258,8 @@ function eliminationPhase(finalRankings, groupStandings) {
     );
 
     return {
+        quarterMatchs: quarterfinals,
+        pots,
         quarterfinals: quarterfinalResults,
         semifinals: semifinalResults,
         final: finalMatch,
@@ -267,10 +279,25 @@ function main() {
     }
     )
 
-    const { semifinals, final, thirdPlace, quarterfinals } = eliminationPhase(
+    const { pots, quarterMatchs, semifinals, final, thirdPlace, quarterfinals } = eliminationPhase(
         finalRankings,
         groupStandings
     );
+
+    console.log('\nŠeširi:')
+    for (const pot in pots) {
+        console.log(`\nŠešir: ${pot}`)
+        pots[pot].forEach((item) => {
+            console.log(item.Team)
+        })
+    }
+
+    console.log('\nElimiciona faza:');
+
+    quarterMatchs.forEach((item) => {
+        console.log(`${item.teamA.Team} - ${item.teamB.Team}`)
+    })
+
 
     console.log('\nČetvrtfinale:')
     quarterfinals.forEach((item) => {
