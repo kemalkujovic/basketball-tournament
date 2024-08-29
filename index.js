@@ -27,10 +27,6 @@ function simulateMatch(teamA, teamB) {
     // (7 / 10 = 0.7 % sanse za pobedu)
     const chanceA = teamB.FIBARanking / totalRanking;
 
-    // let winnerA = scoreA > scoreB ? teamA : teamB;
-    // let winnerB = scoreB < scoreA ? teamB : teamA;
-
-    // random brojevi do 99 Poena.
     let scoreA = Math.floor(Math.random() * 30) + 70;
     let scoreB = Math.floor(Math.random() * 30) + 70;
 
@@ -57,12 +53,37 @@ function simulateMatch(teamA, teamB) {
     }
 }
 
-// console.log(
-//     simulateMatch(
-//         { Team: "Nemačka", ISOCode: "GER", FIBARanking: 3 },
-//         { Team: "Francuska", ISOCode: "FRA", FIBARanking: 9 }
-//     )
-// );
+function simulateMatchPlayOff(teamA, teamB) {
+    const totalRanking = teamA.FIBARanking + teamB.FIBARanking;
+    const chanceA = teamB.FIBARanking / totalRanking;
+
+    let scoreA = Math.floor(Math.random() * 30) + 70;
+    let scoreB = Math.floor(Math.random() * 30) + 70;
+
+    while (scoreA === scoreB) {
+        scoreA = Math.floor(Math.random() * 30) + 70;
+        scoreB = Math.floor(Math.random() * 30) + 70;
+    }
+
+    const winningScore = Math.max(scoreA, scoreB);
+    const losingScore = Math.min(scoreA, scoreB);
+
+    if (Math.random() < chanceA) {
+        return {
+            winner: teamA,
+            loser: teamB,
+            score: `${winningScore}:${losingScore}`,
+        };
+    } else {
+        return {
+            winner: teamB,
+            loser: teamA,
+            score: `${winningScore}:${losingScore}`,
+        };
+    }
+}
+
+
 
 function groupStage(groups) {
     const standings = {};
@@ -195,41 +216,26 @@ function eliminationPhase(finalRankings, groupStandings) {
         F: finalRankings.slice(4, 6),
         G: finalRankings.slice(6, 8),
     };
-    const usedTeams = [];
 
-    const findOpponent = (teamA, pot) => {
-        const availableTeams = pot.filter(
-            (team) =>
-                !havePlayedBefore(teamA, team) && !usedTeams.includes(team.ISOCode)
-        );
-        usedTeams.push(availableTeams[0]?.ISOCode);
-        return availableTeams.length > 0 ? availableTeams[0] : undefined;
-    };
-
-    const havePlayedBefore = (teamA, teamB) => {
-        return teamA.group === teamB.group;
+    const findOpponent = (fristPots, secondPots) => {
+        const matchups = [];
+        if (fristPots[0].group !== secondPots[0].group && fristPots[1].group !== secondPots[1].group) {
+            matchups.push({ teamA: fristPots[0], teamB: secondPots[0] });
+            matchups.push({ teamA: fristPots[1], teamB: secondPots[1] });
+        } else if (fristPots[0].group !== secondPots[1].group && fristPots[1].group !== secondPots[0].group) {
+            matchups.push({ teamA: fristPots[0], teamB: secondPots[1] });
+            matchups.push({ teamA: fristPots[1], teamB: secondPots[0] });
+        }
+        return matchups
     };
 
     const quarterfinals = [
-        {
-            teamA: pots.D[0],
-            teamB: findOpponent(pots.D[0], pots.G),
-        },
-        {
-            teamA: pots.D[1],
-            teamB: findOpponent(pots.D[1], pots.G),
-        },
-        {
-            teamA: pots.E[0],
-            teamB: findOpponent(pots.E[0], pots.F),
-        },
-        {
-            teamA: pots.E[1],
-            teamB: findOpponent(pots.E[1], pots.F),
-        },
+        ...findOpponent(pots.D, pots.G),
+        ...findOpponent(pots.E, pots.F),
     ];
+
     const quarterfinalResults = quarterfinals.map((match) =>
-        simulateMatch(match.teamA, match.teamB)
+        simulateMatchPlayOff(match.teamA, match.teamB)
     );
 
     const semifinals = [
@@ -244,15 +250,15 @@ function eliminationPhase(finalRankings, groupStandings) {
     ];
 
     const semifinalResults = semifinals.map((match) =>
-        simulateMatch(match.teamA, match.teamB)
+        simulateMatchPlayOff(match.teamA, match.teamB)
     );
 
-    const finalMatch = simulateMatch(
+    const finalMatch = simulateMatchPlayOff(
         semifinalResults[0].winner,
         semifinalResults[1].winner
     );
 
-    const thirdPlaceMatch = simulateMatch(
+    const thirdPlaceMatch = simulateMatchPlayOff(
         semifinalResults[0].loser,
         semifinalResults[1].loser
     );
@@ -283,7 +289,6 @@ function main() {
         finalRankings,
         groupStandings
     );
-
     console.log('\nŠeširi:')
     for (const pot in pots) {
         console.log(`\nŠešir: ${pot}`)
@@ -311,10 +316,15 @@ function main() {
     })
 
     console.log('\nUtakmica za treće mesto:')
-    console.log(`${thirdPlace.winner.Team} - ${thirdPlace.loser.Team} ${thirdPlace.score}`)
+    console.log(`${thirdPlace?.winner.Team} - ${thirdPlace?.loser.Team} ${thirdPlace.score}`)
 
     console.log('\nFinale:')
     console.log(`${final.winner.Team} - ${final.loser.Team} ${final.score}`)
+
+    console.log('\nMedalje:')
+    console.log(`1.${final.winner.Team}`)
+    console.log(`2.${final.loser.Team}`)
+    console.log(`3.${thirdPlace.winner.Team}`)
 
 }
 
